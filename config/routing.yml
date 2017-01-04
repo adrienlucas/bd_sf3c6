@@ -1,0 +1,20 @@
+app_homepage:
+    path: /
+    defaults:
+        _controller: "Application\\Controller::homepageAction"
+        name: Anonymous
+
+app_hello:
+    path: /hello/{name}
+    defaults:
+        _controller: "Application\\Controller::homepageAction"
+    requirements: {name: "[a-z]+"}
+
+app_list:
+    path: /list
+    defaults: {_script: "list"}
+
+app_todo:
+    path: /todo/{id}
+    defaults: {_script: "todo"}
+    requirements: {id: "\\d+"}
