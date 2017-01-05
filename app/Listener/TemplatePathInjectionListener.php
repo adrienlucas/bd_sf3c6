@@ -2,7 +2,6 @@
 
 namespace Application\Listener;
 
-
 use Application\AbstractController;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 
@@ -18,7 +17,7 @@ class TemplatePathInjectionListener
     public function onKernelController(FilterControllerEvent $event)
     {
         $controller = $event->getController();
-        if(!is_array($controller) || !isset($controller[0]) || !$controller[0] instanceof AbstractController) {
+        if (!is_array($controller) || !isset($controller[0]) || !$controller[0] instanceof AbstractController) {
             return;
         }
 

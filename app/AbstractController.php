@@ -2,7 +2,6 @@
 
 namespace Application;
 
-
 use Symfony\Bridge\Twig\TwigEngine;
 use Symfony\Component\Templating\TemplateNameParser;
 
@@ -25,6 +24,7 @@ class AbstractController
         $twigEnvironment = new \Twig_Environment($templateLoader);
 
         $engine = new TwigEngine($twigEnvironment, $templateNameParser);
+
         return $engine->render($templateName, $parameters);
     }
 }

@@ -2,13 +2,11 @@
 
 namespace Application\Listener;
 
-
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 
 class LegacyListener
 {
-
     private $legacyRoot;
 
     /**
@@ -22,7 +20,7 @@ class LegacyListener
     public function onKernelRequest(GetResponseEvent $event)
     {
         $requestAttributes = $event->getRequest()->attributes;
-        if(!$requestAttributes->has('_script')) {
+        if (!$requestAttributes->has('_script')) {
             return;
         }
 

@@ -2,10 +2,8 @@
 
 namespace Application\Listener;
 
-
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class ExceptionListener
@@ -14,7 +12,7 @@ class ExceptionListener
     {
         $response = new Response('Internal server error', Response::HTTP_INTERNAL_SERVER_ERROR);
         $exceptionName = get_class($event->getException());
-        switch($exceptionName) {
+        switch ($exceptionName) {
             case ResourceNotFoundException::class:
                 $response->setContent('Page not found ...');
                 $response->setStatusCode(Response::HTTP_NOT_FOUND);
@@ -25,5 +23,4 @@ class ExceptionListener
         }
         $event->setResponse($response);
     }
-
 }

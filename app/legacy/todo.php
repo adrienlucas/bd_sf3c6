@@ -3,7 +3,7 @@
 include 'config.php';
 include 'header.php';
 
-$result = mysqli_query($conn, 'SELECT * FROM todo WHERE id = '. $_GET['id']);
+$result = mysqli_query($conn, 'SELECT * FROM todo WHERE id = '.$_GET['id']);
 $todo = mysqli_fetch_assoc($result);
 
 ?>
@@ -14,4 +14,4 @@ $todo = mysqli_fetch_assoc($result);
     <strong>Status</strong>: <?php echo $todo['is_done'] ? 'done' : 'not finished' ?>
 </p>
 
-<?php include 'footer.php' ?>
+<?php include 'footer.php'?>
