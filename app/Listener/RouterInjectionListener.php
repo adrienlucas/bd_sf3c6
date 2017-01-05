@@ -2,23 +2,18 @@
 
 namespace Application\Listener;
 
-
 use Application\AbstractController;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
+use Symfony\Component\Routing\Router;
 
-class DatabaseConnectionInjectionListener
+class RouterInjectionListener
 {
-    private $connection;
+    private $router;
 
-    /**
-     * DatabaseConnectionInjectionListener constructor.
-     * @param \mysqli $connection
-     */
-    public function __construct($connection)
+    public function __construct(Router $router)
     {
-        $this->connection = $connection;
+        $this->router = $router;
     }
-
 
     public function onKernelController(FilterControllerEvent $event)
     {
@@ -27,6 +22,6 @@ class DatabaseConnectionInjectionListener
             return;
         }
 
-        $controller[0]->setDatabaseConnection($this->connection);
+        $controller[0]->setRouter($this->router);
     }
 }

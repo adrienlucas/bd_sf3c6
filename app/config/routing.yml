@@ -16,9 +16,14 @@ app_todo_list:
     requirements: {_method: "GET"}
 #    methods: [GET]
 
+app_todo_detail:
+    path: /todo/{id}
+    defaults: {_controller: "Application\\TodoController::detailAction"}
+
 app_todo_create:
     path: /list/create
     defaults: {_controller: "Application\\TodoController::createAction"}
+    requirements: {_method: POST}
 #    methods: [POST]
 
 app_todo_close:

@@ -3,21 +3,40 @@
 namespace Application;
 
 
+use Application\DAO\TodoDAO;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
-class TodoController extends AbstractController
+class TodoController extends AbstractController implements TodoDAOAwareInterface
 {
+    /**
+     * @var TodoDAO
+     */
+    private $todoDao;
+
+    public function setTodoDAO(TodoDAO $todoDAO)
+    {
+        $this->todoDao = $todoDAO;
+    }
+
     public function listAction()
     {
-        $todos = [];
-        $databaseResult = mysqli_query($this->connection, 'SELECT * FROM todo');
-        while($row = mysqli_fetch_assoc($databaseResult)) {
-            $todos[] = $row;
-        }
-
+        $todos = $this->todoDao->getAll();
         return $this->render('todo/list.html.twig', [
             'todos' => $todos
+        ]);
+    }
+
+    public function detailAction($id)
+    {
+        $todo = $this->todoDao->get($id);
+        if($todo === null) {
+            throw new ResourceNotFoundException('Task not found...');
+        }
+
+        return $this->render('todo/todo.html.twig', [
+            'todo' => $todo
         ]);
     }
 
@@ -27,25 +46,19 @@ class TodoController extends AbstractController
             throw new \InvalidArgumentException('You should provide a title to create a todo');
         }
 
-        $query = 'INSERT INTO todo (title) VALUES(\''.$request->request->get('title').'\');';
-        mysqli_query($this->connection, $query) or die('Unable to create new task : '.mysql_error());
-
-        return new RedirectResponse('/list');
+        $this->todoDao->create($request->request->get('title'));
+        return $this->redirectToRoute('app_todo_list');
     }
 
     public function closeAction($id)
     {
-        $query = 'UPDATE todo SET is_done = 1 WHERE id = '.$id;
-        mysqli_query($this->connection, $query) or die('Unable to update existing task : '.mysqli_error($conn));
-
-        return new RedirectResponse('/list');
+        $this->todoDao->close($id);
+        return $this->redirectToRoute('app_todo_list');
     }
 
     public function deleteAction($id)
     {
-        $query = 'DELETE FROM todo WHERE id = '.$id;
-        mysqli_query($this->connection, $query) or die('Unable to delete existing task : '.mysql_error());
-
-        return new RedirectResponse('/list');
+        $this->todoDao->delete($id);
+        return $this->redirectToRoute('app_todo_list');
     }
 }

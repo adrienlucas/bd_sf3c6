@@ -11,10 +11,11 @@ class ExceptionListener
     public function onKernelException(GetResponseForExceptionEvent $event)
     {
         $response = new Response('Internal server error', Response::HTTP_INTERNAL_SERVER_ERROR);
-        $exceptionName = get_class($event->getException());
+        $exception = $event->getException();
+        $exceptionName = get_class($exception);
         switch ($exceptionName) {
             case ResourceNotFoundException::class:
-                $response->setContent('Page not found ...');
+                $response->setContent($exception->getMessage() ?: 'Resource not found ...');
                 $response->setStatusCode(Response::HTTP_NOT_FOUND);
                 break;
             default:

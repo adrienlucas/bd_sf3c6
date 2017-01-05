@@ -2,17 +2,22 @@
 
 namespace Application;
 
-use Application\Listener\DatabaseConnectionInjectionListener;
+use Application\DAO\TodoDAO;
 use Application\Listener\ExceptionListener;
 use Application\Listener\LegacyListener;
+use Application\Listener\RouterInjectionListener;
 use Application\Listener\RouterListener;
 use Application\Listener\TemplatePathInjectionListener;
+use Application\Listener\TodoDAOInjectionListener;
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\HttpKernel;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Routing\Loader\YamlFileLoader;
+use Symfony\Component\Routing\Router;
 
 class LegacyKernel implements HttpKernelInterface
 {
@@ -45,10 +50,20 @@ class LegacyKernel implements HttpKernelInterface
             [new TemplatePathInjectionListener($this->applicationRoot.'/views'), 'onKernelController']
         );
 
-        $connection = $this->connectToDatabase();
+
+        $fileLocator = new FileLocator($this->applicationRoot.'/config');
+        $loader = new YamlFileLoader($fileLocator);
+        $router = new Router($loader, 'routing.yml');
+
         $eventDispatcher->addListener(
             KernelEvents::CONTROLLER,
-            [new DatabaseConnectionInjectionListener($connection), 'onKernelController']
+            [new RouterInjectionListener($router), 'onKernelController']
+        );
+
+        $todoDAO = new TodoDAO();
+        $eventDispatcher->addListener(
+            KernelEvents::CONTROLLER,
+            [new TodoDAOInjectionListener($todoDAO), 'onKernelController']
         );
 
         $eventDispatcher->addListener(
@@ -68,16 +83,5 @@ class LegacyKernel implements HttpKernelInterface
     public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = true)
     {
         return $this->httpKernel->handle($request);
-    }
-
-    private function connectToDatabase()
-    {
-        if (!$conn = mysqli_connect('localhost', 'root', 'toor')) {
-            die('Unable to connect to MySQL : '.mysql_errno().' '.mysql_error());
-        }
-
-        mysqli_select_db($conn, 'training_todo') or die('Unable to select database "training_todo"');
-
-        return $conn;
     }
 }

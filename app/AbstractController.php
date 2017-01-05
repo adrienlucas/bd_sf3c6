@@ -3,13 +3,27 @@
 namespace Application;
 
 use Symfony\Bridge\Twig\TwigEngine;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Router;
 use Symfony\Component\Templating\TemplateNameParser;
 
 class AbstractController
 {
     private $templatesPath;
-    protected $connection;
+
+    /**
+     * @var Router
+     */
+    private $router;
+
+    /**
+     * @param Router $router
+     */
+    public function setRouter(Router $router)
+    {
+        $this->router = $router;
+    }
 
     /**
      * @param mixed $templatesPath
@@ -18,13 +32,6 @@ class AbstractController
     {
         $this->templatesPath = $templatesPath;
     }
-    /**
-     * @param mixed $templatesPath
-     */
-    public function setDatabaseConnection($connection)
-    {
-        $this->connection = $connection;
-    }
 
     protected function render($templateName, $parameters)
     {
@@ -32,8 +39,22 @@ class AbstractController
         $templateNameParser = new TemplateNameParser();
         $twigEnvironment = new \Twig_Environment($templateLoader);
 
+        $twigEnvironment->addFunction(new \Twig_SimpleFunction('generate_url', function($routeName, $routeParameters=[]) {
+            return $this->router->generate($routeName, $routeParameters);
+        }));
+
         $engine = new TwigEngine($twigEnvironment, $templateNameParser);
 
         return new Response($engine->render($templateName, $parameters));
+    }
+
+    protected function generateUrl($routeName, $routeParameters=[])
+    {
+        return $this->router->generate($routeName, $routeParameters);
+    }
+
+    protected function redirectToRoute($routeName, $routeParameters=[])
+    {
+        return new RedirectResponse($this->generateUrl($routeName, $routeParameters));
     }
 }
