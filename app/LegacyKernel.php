@@ -2,6 +2,8 @@
 
 namespace Application;
 
+use Application\Listener\ExceptionListener;
+use Application\Listener\RouterListener;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -9,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\HttpKernel;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Loader\YamlFileLoader;
@@ -17,18 +20,30 @@ use Symfony\Component\Routing\RequestContext;
 
 class LegacyKernel implements HttpKernelInterface
 {
-    private $pagesRoot;
+    private $applicationRoot;
 
     /**
      * @var HttpKernel
      */
     private $httpKernel;
 
-    public function __construct($pagesRoot)
+    public function __construct($applicationRoot)
     {
-        $this->pagesRoot = $pagesRoot;
+        $this->applicationRoot = $applicationRoot;
+
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(
+            KernelEvents::REQUEST,
+            [new RouterListener($this->applicationRoot.'/config'), 'onKernelRequest']
+        );
+
+        $eventDispatcher->addListener(
+            KernelEvents::EXCEPTION,
+            [new ExceptionListener(), 'onKernelException']
+        );
+
         $this->httpKernel = new HttpKernel(
-            new EventDispatcher(),
+            $eventDispatcher,
             new ControllerResolver()
         );
     }
@@ -40,6 +55,7 @@ class LegacyKernel implements HttpKernelInterface
     {
         return $this->httpKernel->handle($request);
 
+        /*
         $path = $request->getPathInfo();
 
         try {
@@ -66,14 +82,15 @@ class LegacyKernel implements HttpKernelInterface
         }
 
         return $response;
+        */
     }
 
     private function renderScriptInResponse($script)
     {
         ob_start();
         $scriptPath = sprintf(
-            '%s/%s.php',
-            $this->pagesRoot,
+            '%s/legacy/%s.php',
+            $this->applicationRoot,
             $script
         );
 
@@ -88,7 +105,7 @@ class LegacyKernel implements HttpKernelInterface
 
     private function routerMatchRequest($path)
     {
-        $fileLocator = new FileLocator($this->pagesRoot.'/config');
+        $fileLocator = new FileLocator($this->applicationRoot.'/config');
         $loader = new YamlFileLoader($fileLocator);
         $routeCollection = $loader->load('routing.yml');
 
