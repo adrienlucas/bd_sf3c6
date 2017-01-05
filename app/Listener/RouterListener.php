@@ -10,14 +10,11 @@ use Symfony\Component\Routing\RequestContext;
 
 class RouterListener
 {
-    private $configurationPath;
+    private $loader;
 
-    /**
-     * @param $configurationPath
-     */
-    public function __construct($configurationPath)
+    public function __construct($loader)
     {
-        $this->configurationPath = $configurationPath;
+        $this->loader = $loader;
     }
 
     public function onKernelRequest(GetResponseEvent $event)
@@ -30,9 +27,7 @@ class RouterListener
 
     private function routerMatchRequest($path)
     {
-        $fileLocator = new FileLocator($this->configurationPath);
-        $loader = new YamlFileLoader($fileLocator);
-        $routeCollection = $loader->load('routing.yml');
+        $routeCollection = $this->loader->load('routing.yml');
 
         $requestContext = new RequestContext();
 

@@ -10,6 +10,9 @@ use Application\Listener\RouterListener;
 use Application\Listener\TemplatePathInjectionListener;
 use Application\Listener\TodoDAOInjectionListener;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
@@ -31,11 +34,12 @@ class LegacyKernel implements HttpKernelInterface
     public function __construct($applicationRoot)
     {
         $this->applicationRoot = $applicationRoot;
+        $serviceContainer = $this->registerServices();
 
         $eventDispatcher = new EventDispatcher();
         $eventDispatcher->addListener(
             KernelEvents::REQUEST,
-            [new RouterListener($this->applicationRoot.'/config'), 'onKernelRequest'],
+            [new RouterListener($serviceContainer->get('yaml_file_loader')), 'onKernelRequest'],
             16
         );
 
@@ -51,13 +55,9 @@ class LegacyKernel implements HttpKernelInterface
         );
 
 
-        $fileLocator = new FileLocator($this->applicationRoot.'/config');
-        $loader = new YamlFileLoader($fileLocator);
-        $router = new Router($loader, 'routing.yml');
-
         $eventDispatcher->addListener(
             KernelEvents::CONTROLLER,
-            [new RouterInjectionListener($router), 'onKernelController']
+            [new RouterInjectionListener($serviceContainer->get('router')), 'onKernelController']
         );
 
         $todoDAO = new TodoDAO();
@@ -88,6 +88,23 @@ class LegacyKernel implements HttpKernelInterface
     private function registerServices()
     {
         $container = new ContainerBuilder();
-        $container->
+
+        $fileLocatorDefinition = new Definition(FileLocator::class);
+        $fileLocatorDefinition->addArgument($this->applicationRoot.'/config');
+
+        $container->setDefinition('file_locator', $fileLocatorDefinition);
+
+        $yamlFileLoaderDefinition = new Definition(YamlFileLoader::class);
+        $yamlFileLoaderDefinition->addArgument(new Reference('file_locator'));
+
+        $container->setDefinition('yaml_file_loader', $yamlFileLoaderDefinition);
+
+        $routerDefinition = new Definition(Router::class);
+        $routerDefinition->addArgument(new Reference('yaml_file_loader'));
+        $routerDefinition->addArgument('routing.yml');
+
+        $container->setDefinition('router', $routerDefinition);
+
+        return $container;
     }
 }
