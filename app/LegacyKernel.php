@@ -3,6 +3,7 @@
 namespace Application;
 
 use Application\Listener\ExceptionListener;
+use Application\Listener\LegacyListener;
 use Application\Listener\RouterListener;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -34,7 +35,14 @@ class LegacyKernel implements HttpKernelInterface
         $eventDispatcher = new EventDispatcher();
         $eventDispatcher->addListener(
             KernelEvents::REQUEST,
-            [new RouterListener($this->applicationRoot.'/config'), 'onKernelRequest']
+            [new RouterListener($this->applicationRoot.'/config'), 'onKernelRequest'],
+            16
+        );
+
+        $eventDispatcher->addListener(
+            KernelEvents::REQUEST,
+            [new LegacyListener($this->applicationRoot.'/legacy'), 'onKernelRequest'],
+            8
         );
 
         $eventDispatcher->addListener(
@@ -101,19 +109,6 @@ class LegacyKernel implements HttpKernelInterface
         require $scriptPath;
 
         return new Response(ob_get_clean());
-    }
-
-    private function routerMatchRequest($path)
-    {
-        $fileLocator = new FileLocator($this->applicationRoot.'/config');
-        $loader = new YamlFileLoader($fileLocator);
-        $routeCollection = $loader->load('routing.yml');
-
-        $requestContext = new RequestContext();
-
-        $urlMatcher = new UrlMatcher($routeCollection, $requestContext);
-
-        return $urlMatcher->match($path);
     }
 
     private function renderControllerInResponse(Request $request)
