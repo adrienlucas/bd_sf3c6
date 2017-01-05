@@ -5,6 +5,7 @@ namespace Application;
 use Application\Listener\ExceptionListener;
 use Application\Listener\LegacyListener;
 use Application\Listener\RouterListener;
+use Application\Listener\TemplatePathInjectionListener;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,6 +44,11 @@ class LegacyKernel implements HttpKernelInterface
             KernelEvents::REQUEST,
             [new LegacyListener($this->applicationRoot.'/legacy'), 'onKernelRequest'],
             8
+        );
+
+        $eventDispatcher->addListener(
+            KernelEvents::CONTROLLER,
+            [new TemplatePathInjectionListener($this->applicationRoot.'/views'), 'onKernelController']
         );
 
         $eventDispatcher->addListener(

@@ -21,6 +21,7 @@ class ExceptionListener
                 break;
             default:
                 $response->headers->add(['X-THROWN-EXCEPTION' => $exceptionName]);
+                $response->headers->add(['X-THROWN-EXCEPTION-MESSAGE' => $event->getException()->getMessage()]);
         }
         $event->setResponse($response);
     }
