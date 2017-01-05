@@ -12,6 +12,7 @@
         "symfony/yaml": "^3.2",
         "symfony/templating": "^3.2",
         "twig/twig": "^1.30",
-        "symfony/twig-bridge": "^3.2"
+        "symfony/twig-bridge": "^3.2",
+        "symfony/dependency-injection": "^3.2"
     }
 }

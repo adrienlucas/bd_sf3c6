@@ -84,4 +84,10 @@ class LegacyKernel implements HttpKernelInterface
     {
         return $this->httpKernel->handle($request);
     }
+
+    private function registerServices()
+    {
+        $container = new ContainerBuilder();
+        $container->
+    }
 }
