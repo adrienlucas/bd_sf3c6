@@ -2,17 +2,23 @@
 
 namespace Application\Listener;
 
+
 use Application\AbstractController;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 
-class TemplatePathInjectionListener
+class DatabaseConnectionInjectionListener
 {
-    private $templatesPath;
+    private $connection;
 
-    public function __construct($templatesPath)
+    /**
+     * DatabaseConnectionInjectionListener constructor.
+     * @param \mysqli $connection
+     */
+    public function __construct($connection)
     {
-        $this->templatesPath = $templatesPath;
+        $this->connection = $connection;
     }
+
 
     public function onKernelController(FilterControllerEvent $event)
     {
@@ -21,6 +27,6 @@ class TemplatePathInjectionListener
             return;
         }
 
-        $controller[0]->setTemplatesPath($this->templatesPath);
+        $controller[0]->setDatabaseConnection($this->connection);
     }
 }

@@ -18,6 +18,7 @@ class ExceptionListener
                 $response->setStatusCode(Response::HTTP_NOT_FOUND);
                 break;
             default:
+                var_dump($event->getException());
                 $response->headers->add(['X-THROWN-EXCEPTION' => $exceptionName]);
                 $response->headers->add(['X-THROWN-EXCEPTION-MESSAGE' => $event->getException()->getMessage()]);
         }

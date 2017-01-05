@@ -3,11 +3,13 @@
 namespace Application;
 
 use Symfony\Bridge\Twig\TwigEngine;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Templating\TemplateNameParser;
 
 class AbstractController
 {
     private $templatesPath;
+    protected $connection;
 
     /**
      * @param mixed $templatesPath
@@ -15,6 +17,13 @@ class AbstractController
     public function setTemplatesPath($templatesPath)
     {
         $this->templatesPath = $templatesPath;
+    }
+    /**
+     * @param mixed $templatesPath
+     */
+    public function setDatabaseConnection($connection)
+    {
+        $this->connection = $connection;
     }
 
     protected function render($templateName, $parameters)
@@ -25,6 +34,6 @@ class AbstractController
 
         $engine = new TwigEngine($twigEnvironment, $templateNameParser);
 
-        return $engine->render($templateName, $parameters);
+        return new Response($engine->render($templateName, $parameters));
     }
 }

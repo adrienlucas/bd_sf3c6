@@ -2,6 +2,7 @@
 
 namespace Application;
 
+use Application\Listener\DatabaseConnectionInjectionListener;
 use Application\Listener\ExceptionListener;
 use Application\Listener\LegacyListener;
 use Application\Listener\RouterListener;
@@ -44,6 +45,12 @@ class LegacyKernel implements HttpKernelInterface
             [new TemplatePathInjectionListener($this->applicationRoot.'/views'), 'onKernelController']
         );
 
+        $connection = $this->connectToDatabase();
+        $eventDispatcher->addListener(
+            KernelEvents::CONTROLLER,
+            [new DatabaseConnectionInjectionListener($connection), 'onKernelController']
+        );
+
         $eventDispatcher->addListener(
             KernelEvents::EXCEPTION,
             [new ExceptionListener(), 'onKernelException']
@@ -61,5 +68,16 @@ class LegacyKernel implements HttpKernelInterface
     public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = true)
     {
         return $this->httpKernel->handle($request);
+    }
+
+    private function connectToDatabase()
+    {
+        if (!$conn = mysqli_connect('localhost', 'root', 'toor')) {
+            die('Unable to connect to MySQL : '.mysql_errno().' '.mysql_error());
+        }
+
+        mysqli_select_db($conn, 'training_todo') or die('Unable to select database "training_todo"');
+
+        return $conn;
     }
 }

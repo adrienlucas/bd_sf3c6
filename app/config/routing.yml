@@ -5,13 +5,32 @@ app_homepage:
         name: Anonymous
 
 app_hello:
-    path: /hello/{name}
+    path: /hello/{name}/{lastname}
     defaults:
         _controller: "Application\\Controller::homepageAction"
     requirements: {name: "[a-z]+"}
 
-app_list:
+app_todo_list:
     path: /list
+    defaults: {_controller: "Application\\TodoController::listAction"}
+    requirements: {_method: "GET"}
+#    methods: [GET]
+
+app_todo_create:
+    path: /list/create
+    defaults: {_controller: "Application\\TodoController::createAction"}
+#    methods: [POST]
+
+app_todo_close:
+    path: /todo/{id}/close
+    defaults: {_controller: "Application\\TodoController::closeAction"}
+
+app_todo_delete:
+    path: /todo/{id}/delete
+    defaults: {_controller: "Application\\TodoController::deleteAction"}
+
+legacy_list:
+    path: /legacy/list
     defaults: {_script: "list"}
 
 app_todo:
