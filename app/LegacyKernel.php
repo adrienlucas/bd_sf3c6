@@ -12,6 +12,7 @@ use Application\Listener\TodoDAOInjectionListener;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,7 +20,7 @@ use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpKernel\HttpKernel;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Routing\Loader\YamlFileLoader;
+use Symfony\Component\Routing\Loader\YamlFileLoader as RoutingYamlFileLoader;
 use Symfony\Component\Routing\Router;
 
 class LegacyKernel implements HttpKernelInterface
@@ -37,27 +38,22 @@ class LegacyKernel implements HttpKernelInterface
         $serviceContainer = $this->registerServices();
 
         $eventDispatcher = new EventDispatcher();
+
         $eventDispatcher->addListener(
             KernelEvents::REQUEST,
-            [new RouterListener($serviceContainer->get('yaml_file_loader')), 'onKernelRequest'],
+            [new RouterListener($serviceContainer->get('routing_file_loader')), 'onKernelRequest'],
             16
         );
 
         $eventDispatcher->addListener(
-            KernelEvents::REQUEST,
-            [new LegacyListener($this->applicationRoot.'/legacy'), 'onKernelRequest'],
-            8
-        );
-
-        $eventDispatcher->addListener(
             KernelEvents::CONTROLLER,
-            [new TemplatePathInjectionListener($this->applicationRoot.'/views'), 'onKernelController']
+            [$serviceContainer->get('app.listener.template_path_injection'), 'onKernelController']
         );
 
 
         $eventDispatcher->addListener(
             KernelEvents::CONTROLLER,
-            [new RouterInjectionListener($serviceContainer->get('router')), 'onKernelController']
+            [$serviceContainer->get('app.listener.router_injection'), 'onKernelController']
         );
 
         $todoDAO = new TodoDAO();
@@ -68,7 +64,7 @@ class LegacyKernel implements HttpKernelInterface
 
         $eventDispatcher->addListener(
             KernelEvents::EXCEPTION,
-            [new ExceptionListener(), 'onKernelException']
+            [$serviceContainer->get('app.listener.exception'), 'onKernelException']
         );
 
         $this->httpKernel = new HttpKernel(
@@ -89,21 +85,11 @@ class LegacyKernel implements HttpKernelInterface
     {
         $container = new ContainerBuilder();
 
-        $fileLocatorDefinition = new Definition(FileLocator::class);
-        $fileLocatorDefinition->addArgument($this->applicationRoot.'/config');
+        $container->setParameter('application.root', $this->applicationRoot);
 
-        $container->setDefinition('file_locator', $fileLocatorDefinition);
-
-        $yamlFileLoaderDefinition = new Definition(YamlFileLoader::class);
-        $yamlFileLoaderDefinition->addArgument(new Reference('file_locator'));
-
-        $container->setDefinition('yaml_file_loader', $yamlFileLoaderDefinition);
-
-        $routerDefinition = new Definition(Router::class);
-        $routerDefinition->addArgument(new Reference('yaml_file_loader'));
-        $routerDefinition->addArgument('routing.yml');
-
-        $container->setDefinition('router', $routerDefinition);
+        $locator = new FileLocator($this->applicationRoot.'/config');
+        $serviceLoader = new YamlFileLoader($container,$locator);
+        $serviceLoader->load('services.yml');
 
         return $container;
     }

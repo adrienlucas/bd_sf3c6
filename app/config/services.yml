@@ -1,0 +1,31 @@
+services:
+    file_locator:
+        class: Symfony\Component\Config\FileLocator
+        arguments: ["%application.root%/config"]
+
+    routing_file_loader:
+        class: Symfony\Component\Routing\Loader\YamlFileLoader
+        arguments: ["@file_locator"]
+
+    router:
+        class: Symfony\Component\Routing\Router
+        arguments: ["@routing_file_loader", "routing.yml"]
+
+
+    app.listener.template_path_injection:
+        class: Application\Listener\TemplatePathInjectionListener
+        arguments: ["%application.root%/views"]
+
+    app.listener.router_injection:
+        class: Application\Listener\RouterInjectionListener
+        arguments: ["@router"]
+
+    app.listener.exception:
+        class: Application\Listener\ExceptionListener
+
+    event_dispatcher:
+        class: EventDispatcher
+        calls:
+            - [addListener, ["@app.listener.template_path_injection"]]
+            - [addListener, ["@app.listener.router_injection"]]
+            - [addListener, ["@app.listener.exception"]]
