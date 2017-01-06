@@ -12,7 +12,7 @@ class RouterListener
 {
     private $loader;
 
-    public function __construct($loader)
+    public function __construct(YamlFileLoader $loader)
     {
         $this->loader = $loader;
     }

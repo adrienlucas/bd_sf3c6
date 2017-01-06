@@ -46,7 +46,7 @@ class TodoDAO
     private function query($query)
     {
         $this->connection = $this->connectToDatabase();
-
+//        var_dump($query); die();
         $result = mysqli_query($this->connection, $query);
 
         if($result === false) {

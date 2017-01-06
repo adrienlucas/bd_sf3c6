@@ -1,4 +1,5 @@
 services:
+    # Third-party services
     file_locator:
         class: Symfony\Component\Config\FileLocator
         arguments: ["%application.root%/config"]
@@ -11,21 +12,42 @@ services:
         class: Symfony\Component\Routing\Router
         arguments: ["@routing_file_loader", "routing.yml"]
 
+    # DAO
+    app.dao.todo:
+        class: Application\DAO\TodoDAO
 
+    # Listeners
     app.listener.template_path_injection:
         class: Application\Listener\TemplatePathInjectionListener
         arguments: ["%application.root%/views"]
 
-    app.listener.router_injection:
+    app.listener.routing:
+        class: Application\Listener\RouterListener
+        arguments: ["@routing_file_loader"]
+
+    app.listener.url_generator_injection:
         class: Application\Listener\RouterInjectionListener
         arguments: ["@router"]
 
     app.listener.exception:
         class: Application\Listener\ExceptionListener
 
+    app.listener.todo_dao_injection:
+        class: Application\Listener\TodoDAOInjectionListener
+        arguments: ["@app.dao.todo"]
+
+    controller_resolver:
+        class: Symfony\Component\HttpKernel\Controller\ControllerResolver
+
+    http_kernel:
+        class: Symfony\Component\HttpKernel\HttpKernel
+        arguments: ["@event_dispatcher", "@controller_resolver"]
+
     event_dispatcher:
-        class: EventDispatcher
+        class: Symfony\Component\EventDispatcher\EventDispatcher
         calls:
-            - [addListener, ["@app.listener.template_path_injection"]]
-            - [addListener, ["@app.listener.router_injection"]]
-            - [addListener, ["@app.listener.exception"]]
+            - [addListener, ["kernel.request", ["@app.listener.routing", "onKernelRequest"]]]
+            - [addListener, ["kernel.controller", ["@app.listener.template_path_injection", "onKernelController"]]]
+            - [addListener, ["kernel.controller", ["@app.listener.url_generator_injection", "onKernelController"]]]
+            - [addListener, ["kernel.controller", ["@app.listener.todo_dao_injection", "onKernelController"]]]
+            - [addListener, ["kernel.exception", ["@app.listener.exception", "onKernelException"]]]
